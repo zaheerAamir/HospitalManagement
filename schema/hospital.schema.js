@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    match: /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
     unique: true
   },
   password: {
@@ -87,7 +86,6 @@ const doctorSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    match: /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
     unique: true
   },
   password: {
@@ -108,6 +106,11 @@ const doctorSchema = new mongoose.Schema({
   * **/
 export const doctorModel = new mongoose.model("Doctor", doctorSchema, "Doctors");
 
+/**
+  * @typedef {Object} AppointmentsDTO
+  * @property {String} appointmentTime
+  * @property {String} doctorId
+**/
 
 /**
   * @typedef {Object} Appointments

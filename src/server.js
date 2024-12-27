@@ -1,6 +1,7 @@
 import express from "express";
 import connectDB from "../utils/connectDb.js";
 import routes from "./routes.js";
+import job from "../cron/cron.js";
 
 const PORT = 8080;
 const app = express();
@@ -11,4 +12,5 @@ app.listen(PORT, () => {
   connectDB();
   routes(app);
   console.log(`Server runniing on Port: ${PORT}!`);
+  job.start();
 })

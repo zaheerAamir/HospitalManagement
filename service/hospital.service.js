@@ -1,4 +1,4 @@
-import { bookAppointmentRepo, createAppointmentRepo, doctorSignUpRepo, userSignUpRepo } from "../repository/hospital.repo.js";
+import { bookAppointmentRepo, createAppointmentRepo, doctorSignUpRepo, getAvailableAppointmentsRepo, getAvailableDoctorsRepo, userSignUpRepo } from "../repository/hospital.repo.js";
 
 export function generateUserId() {
   const timestamp = Date.now().toString(36);
@@ -60,14 +60,21 @@ export async function doctorSignUpService(body) {
 }
 
 /**
-  * @param {import("../schema/hospital.schema").Appointments} body 
+  * @param {import("../schema/hospital.schema").AppointmentsDTO} body 
 **/
 export async function createAppointmentService(body) {
 
   try {
 
-    body.appointmentID = generateUserId();
-    createAppointmentRepo(body);
+    /**
+      * @type {import("../schema/hospital.schema").Appointments}
+      * **/
+    const appointment = {
+      appointmentID: generateUserId(),
+      appointmentTime: new Date(`${body.appointmentTime}`),
+      doctorId: body.doctorId
+    }
+    createAppointmentRepo(appointment);
 
 
   } catch (err) {
@@ -93,5 +100,31 @@ export async function bookAppointmentService(appointmentID, bookedBy) {
     throw new Error(err);
   }
 
+}
 
+export async function getAvailableDoctorsService() {
+
+  try {
+
+    const res = await getAvailableDoctorsRepo();
+    return res;
+
+  } catch (err) {
+    throw new Error(err);
+  }
+
+}
+
+/**
+  * @param {string} doctorID 
+  * **/
+export async function getAvalilableAppointmentsService(doctorID) {
+
+  try {
+
+    const res = await getAvailableAppointmentsRepo(doctorID);
+    return res;
+  } catch (err) {
+    throw new Error(err);
+  }
 }

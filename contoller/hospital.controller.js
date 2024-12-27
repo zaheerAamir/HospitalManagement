@@ -1,5 +1,5 @@
 import express from "express";
-import { bookAppointmentService, createAppointmentService, doctorSignUpService, userSignUpService } from "../service/hospital.service.js";
+import { bookAppointmentService, createAppointmentService, doctorSignUpService, getAvailableDoctorsService, getAvalilableAppointmentsService, userSignUpService } from "../service/hospital.service.js";
 
 /**
   * @param {express.Request} req 
@@ -59,7 +59,7 @@ export async function userSignUpController(req, res) {
 
       return res.status(Response.statusCode).json(Response);
     } else {
-      Response.statusCode = 200;
+      Response.statusCode = 201;
       Response.message = "User Created Successfully!";
       Response.error = "";
 
@@ -123,7 +123,7 @@ export async function doctorSignUpController(req, res) {
 
       return res.status(Response.statusCode).json(Response);
     } else {
-      Response.statusCode = 200;
+      Response.statusCode = 201;
       Response.message = "Doctor Created Successfully!";
       Response.error = "";
 
@@ -159,7 +159,7 @@ export async function createAppointmentController(req, res) {
   try {
 
     /**
-      * @type {import("../schema/hospital.schema").Appointments}
+      * @type {import("../schema/hospital.schema").AppointmentsDTO}
     **/
     const body = req.body;
     if (!body || !body.appointmentTime || !body.doctorId) {
@@ -169,10 +169,9 @@ export async function createAppointmentController(req, res) {
 
       return res.status(Response.statusCode).json(Response);
     } else {
-      Response.statusCode = 200;
+      Response.statusCode = 201;
       Response.message = "Appointment Created Successfully!";
       Response.error = "";
-
 
       createAppointmentService(body);
 
@@ -236,5 +235,75 @@ export async function bookAppointmentController(req, res) {
     return res.status(Response.statusCode).json(Response);
   }
 
+}
+
+/**
+  * @param {express.Request} req 
+  * @param {express.Response} res 
+  * **/
+export async function getAvailableDoctorsController(req, res) {
+
+  /**
+    * @type {import("../schema/hospital.schema").Resp}
+  **/
+  const Response = {
+    statusCode: 0,
+    message: "",
+    error: ""
+  }
+
+  try {
+
+    const result = await getAvailableDoctorsService();
+    if (result !== undefined) {
+      Response.statusCode = 200;
+      Response.message = "Doctor that are Available!";
+      Response.error = "";
+
+      return res.status(Response.statusCode).json({ Response, result });
+
+    }
+  } catch (err) {
+    Response.statusCode = 400;
+    Response.message = "Something went Wrong!";
+    Response.error = err.toString().replace(/Error: /g, '');
+
+    return res.status(Response.statusCode).json(Response);
+  }
 
 }
+
+/**
+  * @param {express.Request} req 
+  * @param {express.Response} res 
+  * **/
+export async function getAvailableAppointmentsController(req, res) {
+  /**
+    * @type {import("../schema/hospital.schema").Resp}
+  **/
+  const Response = {
+    statusCode: 0,
+    message: "",
+    error: ""
+  }
+  try {
+
+    const { doctorID } = req.params;
+    if (doctorID !== undefined) {
+
+      const result = await getAvalilableAppointmentsService(doctorID);
+      Response.statusCode = 200;
+      Response.message = "Available list of Appointments!";
+      Response.error = "";
+
+      return res.status(Response.statusCode).json({ Response, result });
+    }
+
+  } catch (err) {
+    Response.statusCode = 400;
+    Response.message = "Something went Wrong!";
+    Response.error = err.toString().replace(/Error: /g, '');
+
+    return res.status(Response.statusCode).json(Response);
+  }
+} 
