@@ -1,4 +1,4 @@
-import { bookAppointmentRepo, createAppointmentRepo, doctorSignUpRepo, getAvailableAppointmentsRepo, getAvailableDoctorsRepo, userSignUpRepo } from "../repository/hospital.repo.js";
+import { bookAppointmentRepo, createAppointmentRepo, doctorSignUpRepo, getAvailableAppointmentsRepo, getAvailableDoctorsRepo, loginUserRepo, userSignUpRepo } from "../repository/hospital.repo.js";
 
 export function generateUserId() {
   const timestamp = Date.now().toString(36);
@@ -21,11 +21,29 @@ export async function userSignUpService(body) {
       name: body.name,
       email: body.email,
       password: body.password,
+      wallet: 500,
     }
 
     console.log(user);
 
     userSignUpRepo(user);
+
+  } catch (err) {
+    throw new Error(err);
+  }
+
+}
+
+/**
+  * @param {String} email 
+  * @param {String} password 
+**/
+export async function loginUserService(email, password) {
+
+  try {
+
+    const res = await loginUserRepo(email, password);
+    return res;
 
   } catch (err) {
     throw new Error(err);
@@ -47,6 +65,7 @@ export async function doctorSignUpService(body) {
       name: body.name,
       email: body.email,
       password: body.password,
+      patientsTreated: [],
     }
 
     console.log(doctor);
@@ -72,7 +91,9 @@ export async function createAppointmentService(body) {
     const appointment = {
       appointmentID: generateUserId(),
       appointmentTime: new Date(`${body.appointmentTime}`),
-      doctorId: body.doctorId
+      doctorId: body.doctorId,
+      cost: 100,
+      discount: 20
     }
     createAppointmentRepo(appointment);
 

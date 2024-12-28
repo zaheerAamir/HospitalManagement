@@ -1,5 +1,5 @@
 import express from "express";
-import { bookAppointmentService, createAppointmentService, doctorSignUpService, getAvailableDoctorsService, getAvalilableAppointmentsService, userSignUpService } from "../service/hospital.service.js";
+import { bookAppointmentService, createAppointmentService, doctorSignUpService, getAvailableDoctorsService, getAvalilableAppointmentsService, loginUserService, userSignUpService } from "../service/hospital.service.js";
 
 /**
   * @param {express.Request} req 
@@ -75,6 +75,60 @@ export async function userSignUpController(req, res) {
     return res.status(Response.statusCode).json(Response);
   }
 
+}
+
+/**
+  * @param {express.Request} req 
+  * @param {express.Response} res 
+**/
+export async function loginUserController(req, res) {
+
+  /**
+    * @type {import("../schema/hospital.schema").Resp}
+  **/
+  const Response = {
+    statusCode: 0,
+    message: "",
+    error: ""
+  }
+
+  try {
+
+    /**
+      * @type {import("../schema/hospital.schema").UserDTO}
+    **/
+    const body = req.body;
+
+    if (!body.email || typeof body.email !== 'string') {
+      Response.statusCode = 400;
+      Response.message = "Please Provide User's email!";
+      Response.error = "User email not provided!";
+
+      return res.status(Response.statusCode).json(Response);
+    } else if (!body.password || typeof body.password !== 'string') {
+      Response.statusCode = 400;
+      Response.message = "Please Provide User's password!";
+      Response.error = "User password not provided!";
+
+      return res.status(Response.statusCode).json(Response);
+    } else {
+      Response.statusCode = 201;
+      Response.message = "User Logged In Successfully!";
+      Response.error = "";
+
+      const result = await loginUserService(body.email, body.password);
+      return res.status(Response.statusCode).json({ Response, result });
+    }
+
+
+  } catch (err) {
+    Response.statusCode = 400;
+    Response.message = "Something went Wrong!";
+    Response.error = err.toString().replace(/Error: /g, '');
+    console.log(Response);
+
+    return res.status(Response.statusCode).json(Response);
+  }
 }
 
 /**
@@ -206,31 +260,33 @@ export async function bookAppointmentController(req, res) {
   try {
 
     const { appointmentID } = req.params;
-    const { bookedBy } = req.body;
+    const bookedBy = req.headers.userid;
 
-    if (!bookedBy || typeof bookedBy !== 'string') {
+    if (!bookedBy || bookedBy === undefined) {
       Response.statusCode = 400;
       Response.message = "Please provide userId!";
       Response.error = "userId not provided!";
 
       return res.status(Response.statusCode).json(Response);
+    } else {
+
+      const result = await bookAppointmentService(appointmentID, bookedBy);
+      if (result !== undefined) {
+        Response.statusCode = 200;
+        Response.message = result;
+        Response.error = "";
+
+        return res.status(Response.statusCode).json(Response);
+      }
     }
 
-    const result = await bookAppointmentService(appointmentID, bookedBy);
-    if (result !== undefined) {
-      Response.statusCode = 200;
-      Response.message = result;
-      Response.error = "";
 
-      return res.status(Response.statusCode).json(Response);
-
-
-    }
 
   } catch (err) {
     Response.statusCode = 400;
     Response.message = "Something went Wrong!";
     Response.error = err.toString().replace(/Error: /g, '');
+    console.log(Response)
 
     return res.status(Response.statusCode).json(Response);
   }

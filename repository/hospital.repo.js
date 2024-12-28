@@ -18,6 +18,36 @@ export async function userSignUpRepo(user) {
 }
 
 /**
+  * @param {String} email 
+  * @param {String} password 
+**/
+export async function loginUserRepo(email, password) {
+
+  try {
+
+    /**
+      * @type {import("../schema/hospital.schema.js").User}
+      * **/
+    const user = await userModel.findOne({ email: email, password: password });
+    if (!user || user === null || user === undefined) {
+      throw new Error("user does not exist!");
+    }
+
+    const response = {
+      name: user.name,
+      userId: user.userId,
+      role: user.role,
+      wallet: user.wallet
+    }
+
+    return response;
+
+  } catch (err) {
+    throw new Error(err);
+  }
+}
+
+/**
   * @param {import("../schema/hospital.schema.js").Doctor} doctor 
 **/
 export async function doctorSignUpRepo(doctor) {
@@ -68,13 +98,47 @@ export async function bookAppointmentRepo(appointmentID, bookedBy, bookedAt) {
 
     /**
       * @type {import("../schema/hospital.schema.js").Appointments}
-      * **/
+    **/
     const appointment = await appointmentModel.findOne({ appointmentID: appointmentID });
+
+    /**
+      * @type {import("../schema/hospital.schema.js").Doctor}
+      * **/
+    const doctor = await doctorModel.findOne({ doctorId: appointment.doctorId })
+
+
     if (!appointment || appointment === null || appointment === undefined) {
       throw new Error("Appointment does not Exist!");
     } else if (appointment.bookedBy !== "") {
       throw new Error("Appointment already booked!")
     } else {
+
+      if (!doctor.patientsTreated.includes(user.userId)) {
+        const discount = (appointment.cost * appointment.discount) / 100;
+        const appointmentCharge = appointment.cost - discount;
+
+        const update1 = await userModel.updateOne(
+          { userId: bookedBy },
+          {
+            $set: { wallet: user.wallet - appointmentCharge }
+          }
+        )
+
+        const update2 = await doctorModel.updateOne(
+          { doctorId: appointment.doctorId },
+          {
+            $addToSet: { patientsTreated: bookedBy }
+          }
+        )
+      } else {
+        const update1 = await userModel.updateOne(
+          { userId: bookedBy },
+          {
+            $set: { wallet: user.wallet - appointment.cost }
+          }
+        )
+      }
+
 
       const update = await appointmentModel.updateOne(
         { appointmentID: appointmentID },
@@ -88,22 +152,28 @@ export async function bookAppointmentRepo(appointmentID, bookedBy, bookedAt) {
         }
       )
 
+
+      /**
+        * @type {import("../schema/hospital.schema.js").User}
+      **/
+      const user2 = await userModel.findOne({ userId: bookedBy })
+
       /**
         * @type {import("../schema/hospital.schema.js").Doctor}
         * **/
-      const doctor = await doctorModel.findOne({ doctorId: appointment.doctorId })
+      const doctor2 = await doctorModel.findOne({ doctorId: appointment.doctorId })
 
       const appointmentTIme = appointment.appointmentTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
       if (update && update.acknowledged) {
         const mailOptions = {
           from: 'aamirzaheer95@gmail.com',        // Sender email
-          to: doctor.email,   // Receiver email
+          to: doctor2.email,   // Receiver email
           subject: "Appointment booked!",
           text: `Appointment Scheduled on Date ${appointmentTIme} with user ${user.name}.`,
         };
-        sendEmail(mailOptions);
-        return `Appointment booked successfully with doctor ${doctor.name}. Appointment time is ${appointmentTIme}. Make sure to Reach within ${appointment.gracePeriodInMins}. If not you will be marked not present in our system!`
+        //sendEmail(mailOptions);
+        return `Appointment booked successfully with doctor ${doctor2.name}. Appointment time is ${appointmentTIme}. Make sure to Reach within ${appointment.gracePeriodInMins}. If not you will be marked not present in our system! Your Current Balance: ${user2.wallet}`
       }
     }
 
@@ -128,6 +198,7 @@ export async function getAvailableDoctorsRepo() {
       doctors.map(doctor => {
 
         const doctorInfo = {
+          id: doctor.doctorId,
           name: doctor.name,
           email: doctor.email,
         }
@@ -165,9 +236,12 @@ export async function getAvailableAppointmentsRepo(doctorID) {
         const doctor = await doctorModel.findOne({ doctorId: doctorID });
         const res = {
           doctorName: doctor.name,
+          appointmentID: appointment.appointmentID,
           appointmentTime: appointment.appointmentTime.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
           available: appointment.available,
-          gracePeriod: appointment.gracePeriodInMins
+          gracePeriod: appointment.gracePeriodInMins,
+          cost: appointment.cost,
+          discount: appointment.discount
         }
 
         appointmentInfos.push(res);

@@ -14,6 +14,7 @@ import mongoose from "mongoose";
   * @property {String} email
   * @property {String} password
   * @property {String} role
+  * @property {number} wallet
 **/
 
 /**
@@ -39,6 +40,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  wallet: {
+    type: Number,
+    required: true,
   },
   role: {
     type: String,
@@ -67,6 +72,7 @@ export const userModel = new mongoose.model("Users", userSchema, "Users");
   * @property {String} email
   * @property {String} password
   * @property {String} role
+  * @property {Array<String>} patientsTreated
 **/
 
 /**
@@ -86,12 +92,13 @@ const doctorSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true
   },
   password: {
     type: String,
     required: true,
-    unique: true
+  },
+  patientsTreated: {
+    type: Array
   },
   role: {
     type: String,
@@ -122,6 +129,8 @@ export const doctorModel = new mongoose.model("Doctor", doctorSchema, "Doctors")
   * @property {number} gracePeriodInMins
   * @property {Date} bookedAt
   * @property {String} bookedBy userId
+  * @property {number} cost
+  * @property {number} discount
 **/
 
 /**
@@ -162,6 +171,14 @@ const appointmentSchema = new mongoose.Schema({
   bookedBy: {
     type: String,
     default: "",
+  },
+  cost: {
+    type: Number,
+    required: true
+  },
+  discount: {
+    type: Number,
+    required: true
   }
 });
 
